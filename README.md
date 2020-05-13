@@ -1,4 +1,4 @@
-This repository is created and maintained by me. [Read more about this (in Russian)](https://this.com/).
+This repository is created and maintained by me. [Read more about me (in Russian)](https://vk.com/gleb260791).
 ##
 # nodejs-package
 
