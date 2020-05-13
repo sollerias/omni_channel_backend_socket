@@ -1,7 +1,7 @@
 {
   "name": "omni_channel",
   "version": "0.1.0",
-  "description": "main_backend",
+  "description": "backend_socket",
   "main": "dist/index.js",
   "bin": {
     "sirius": "dist/bin/sirius.js"
@@ -20,17 +20,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sollerias/nodejs_boilerplate"
+    "url": "git+https://github.com/sollerias/omni_channel_backend"
   },
   "author": "Gleb Tregubov",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/sollerias/nodejs_boilerplate/issues"
+    "url": "https://github.com/sollerias/omni_channel_backend/issues"
   },
   "jest": {
     "testEnvironment": "node"
   },
-  "homepage": "https://github.com/sollerias/nodejs_boilerplate",
+  "homepage": "https://github.com/sollerias/omni_channel_backend ",
   "dependencies": {
     "lodash": "^4.17.15"
   },
