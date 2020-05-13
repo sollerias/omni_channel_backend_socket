@@ -1,0 +1,55 @@
+{
+  "name": "omni_channel",
+  "version": "0.1.0",
+  "description": "main_backend",
+  "main": "dist/index.js",
+  "bin": {
+    "sirius": "dist/bin/sirius.js"
+  },
+  "engines": {
+    "node": ">=12"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "jest",
+    "dev": "NODE_ENV=develop nodemon --exec babel src --out-dir dist --source-maps inline",
+    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sollerias/nodejs_boilerplate"
+  },
+  "author": "Gleb Tregubov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sollerias/nodejs_boilerplate/issues"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "homepage": "https://github.com/sollerias/nodejs_boilerplate",
+  "dependencies": {
+    "lodash": "^4.17.15"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/node": "^7.8.7",
+    "@babel/plugin-proposal-pipeline-operator": "^7.8.3",
+    "@babel/preset-env": "^7.9.5",
+    "babel-eslint": "^10.1.0",
+    "babel-jest": "^25.4.0",
+    "debug": "^4.1.1",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-jest": "^23.8.2",
+    "jest": "^25.4.0",
+    "jest-cli": "^25.4.0",
+    "nodemon": "^2.0.3"
+  }
+}
