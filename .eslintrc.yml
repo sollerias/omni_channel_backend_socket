@@ -19,5 +19,5 @@ extends:
   - 'plugin:jest/recommended'
 
 rules:
-  no-console: 0
+  no-console: 1
   import/extensions: 0 # FIXME: remove when rule will be adjusted for new nodejs version
