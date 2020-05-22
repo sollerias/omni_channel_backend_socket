@@ -1,75 +1,69 @@
-// const path = require('path');
-// // Начало: Логирование
+import loggerFunction from './logger';
+import {
+  statusAnswer,
+} from './helpers';
 
-// // const notifyIdArray = [ 1, 2, 3, 4, 'pizza']
-// const notifyIdArray = []
-// let errorBody = ''
-// /**
-//  * addSocketId() - добовляет эксклюзивный socketId в массив
-//  * notifyIdArray
-//  * @param {string} socketId 
-//  */
-// const addSocketId = (socketId) => {
-//     let journalName = 'notify/addSocketId'
-//     const checkExistence = notifyIdArray.includes(socketId)
-//     if (!checkExistence) {
-//         let addElementToArray = notifyIdArray.push(socketId)
-//         messageBody = {
-//             addItemsArray: notifyIdArray
-//         }
-//         console.log('addSocketId: ', notifyIdArray)
-//         logging.writeLog(logDirectory, dirname, fileName, journalName, JSON.stringify(messageBody))
-//         return addElementToArray
-//     } else {
-//         errorBody = {
-//             error: 'Такой элемент уже существует'
-//         }
-//         console.log(errorBody)
-//         logging.writeLog(errorLogDirectory, dirname, fileName, journalName, JSON.stringify(errorBody))
-//         return errorBody
-//     }
-// }
-// /**
-//  * getSocketIdArray() - возвращает массив ID сокетов
-//  */
-// const getSocketIdArray = () => {
-//     // console.log('getSocketIdArray notifyIdArray: ', notifyIdArray)
-//     return notifyIdArray
-// }
-// /**
-//  * removeSockeIdFromArray() - удаляет socketId из массива, если произошел
-//  * дисконнект
-//  * @param {String} socketId 
-//  */
-// const removeSockeIdFromArray = (socketId) => {
-//     let journalName = 'notify/removeSockeIdFromArray'
-//     // console.log('removeSockeIdFromArray socketId: ', socketId)
-//     let foundIndex = notifyIdArray.findIndex((element, index) =>{
-//         // console.log('removeSockeIdFromArray: ', element, ' | socketId: ', socketId, ' | index: ', index)
-//         return element === socketId
-//     })
-//     // console.log(notifyIdArray)
-//     if (foundIndex >= 0) {
-//         // console.log(foundIndex)
-//         let removingElement = notifyIdArray.splice(foundIndex, 1)
-//         console.log('removeSockeIdFromArray array: ', notifyIdArray)
-//         messageBody = {
-//             removedItemsArray: notifyIdArray
-//         }
-//         logging.writeLog(logDirectory, dirname, fileName, journalName, JSON.stringify(messageBody))
-//         return removingElement
-//     } else {
-//         errorBody = {
-//             error: 'Такой элемент не найден'
-//         }
-//         // console.log(errorBody)
-//         logging.writeLog(errorLogDirectory, dirname, fileName, journalName, JSON.stringify(errorBody))
-//         return errorBody
-//     }
-// }
+const filePath = __filename;
 
-// module.exports = {
-//     addSocketId,
-//     getSocketIdArray,
-//     removeSockeIdFromArray
-// }
+const notifyIdArray = [];
+let errorBody = '';
+/**
+ * addSocketId() - добовляет эксклюзивный socketId в массив
+ * notifyIdArray
+ * @param {string} socketId
+ */
+const addSocketId = async (socketId) => {
+  const checkExistence = notifyIdArray.includes(socketId);
+  if (!checkExistence) {
+    const addElementToArray = notifyIdArray.push(socketId);
+    const messageBody = JSON.stringify({
+      addItemsArray: notifyIdArray,
+    });
+    console.log('addSocketId: ', notifyIdArray);
+    loggerFunction('addSocketId', filePath, await statusAnswer(false, '00', 'addSocketIdInfo', messageBody), 'info');
+
+    return addElementToArray;
+  }
+  errorBody = JSON.stringify({
+    error: 'Такой элемент уже существует',
+  });
+  console.log(errorBody);
+  loggerFunction('addSocketId', filePath, await statusAnswer(true, '04', 'addSocketIdInfo', errorBody), 'warn');
+
+  return errorBody;
+};
+/**
+ * getSocketIdArray() - возвращает массив ID сокетов
+ */
+const getSocketIdArray = () => notifyIdArray;
+/**
+ * removeSockeIdFromArray() - удаляет socketId из массива, если произошел
+ * дисконнект
+ * @param {String} socketId
+ */
+const removeSockeIdFromArray = async (socketId) => {
+  // console.log('removeSockeIdFromArray socketId: ', socketId)
+  const foundIndex = notifyIdArray.findIndex((element) => element === socketId);
+  // console.log(notifyIdArray)
+  if (foundIndex >= 0) {
+    // console.log(foundIndex)
+    const removingElement = notifyIdArray.splice(foundIndex, 1);
+    console.log('removeSockeIdFromArray array: ', notifyIdArray);
+    const messageBody = JSON.stringify({
+      removedItemsArray: notifyIdArray,
+    });
+    loggerFunction('addSocketId', filePath, await statusAnswer(false, '00', 'removeSockeIdFromArray', messageBody), 'warn');
+
+    return removingElement;
+  }
+  errorBody = await statusAnswer(true, '04', 'Такой элемент не найден', { elem: socketId });
+  loggerFunction('addSocketId', filePath, errorBody, 'warn');
+
+  return errorBody;
+};
+
+export {
+  addSocketId,
+  getSocketIdArray,
+  removeSockeIdFromArray,
+};
