@@ -2,64 +2,86 @@ import loggerFunction from './logger';
 import {
   statusAnswer,
 } from './helpers';
+import socketIdValidation from './validations/notify';
 
 const filePath = __filename;
-
 const notifyIdArray = [];
 let errorBody = '';
+
 /**
  * addSocketId() - добовляет эксклюзивный socketId в массив
  * notifyIdArray
  * @param {string} socketId
  */
 const addSocketId = async (socketId) => {
-  const checkExistence = notifyIdArray.includes(socketId);
-  if (!checkExistence) {
-    const addElementToArray = notifyIdArray.push(socketId);
+  const validatedData = await socketIdValidation(socketId);
+
+  if (validatedData.catchError) {
+    const negativeAnswer = await statusAnswer(true, '11', 'authorize fail. Wrong request', JSON.stringify(validatedData.catchError));
+    loggerFunction('addSocketId', filePath, negativeAnswer, 'error');
+
+    return negativeAnswer;
+  }
+  const isSocketInArray = notifyIdArray.includes(validatedData);
+
+  if (!isSocketInArray) {
+    notifyIdArray.push(socketId);
+
     const messageBody = JSON.stringify({
       addItemsArray: notifyIdArray,
     });
-    console.log('addSocketId: ', notifyIdArray);
-    loggerFunction('addSocketId', filePath, await statusAnswer(false, '00', 'addSocketIdInfo', messageBody), 'info');
 
-    return addElementToArray;
+    const positiveAnswer = await statusAnswer(false, '00', 'OK', messageBody);
+    loggerFunction('addSocketId', filePath, positiveAnswer, 'info');
+
+    return positiveAnswer;
   }
   errorBody = JSON.stringify({
     error: 'Такой элемент уже существует',
   });
-  console.log(errorBody);
-  loggerFunction('addSocketId', filePath, await statusAnswer(true, '04', 'addSocketIdInfo', errorBody), 'warn');
+  const negativeAnswer = await statusAnswer(true, '01', 'addSocketId fail', errorBody);
+  loggerFunction('addSocketId', filePath, negativeAnswer, 'error');
 
-  return errorBody;
+  return negativeAnswer;
 };
 /**
  * getSocketIdArray() - возвращает массив ID сокетов
  */
-const getSocketIdArray = () => notifyIdArray;
+const getSocketIdArray = async () => {
+  const positiveAnswer = await statusAnswer(false, '00', 'OK', JSON.stringify(notifyIdArray));
+  loggerFunction('getSocketIdArray', filePath, positiveAnswer, 'info');
+
+  return notifyIdArray;
+};
 /**
  * removeSockeIdFromArray() - удаляет socketId из массива, если произошел
  * дисконнект
  * @param {String} socketId
  */
 const removeSockeIdFromArray = async (socketId) => {
-  // console.log('removeSockeIdFromArray socketId: ', socketId)
-  const foundIndex = notifyIdArray.findIndex((element) => element === socketId);
-  // console.log(notifyIdArray)
-  if (foundIndex >= 0) {
-    // console.log(foundIndex)
-    const removingElement = notifyIdArray.splice(foundIndex, 1);
-    console.log('removeSockeIdFromArray array: ', notifyIdArray);
-    const messageBody = JSON.stringify({
-      removedItemsArray: notifyIdArray,
-    });
-    loggerFunction('addSocketId', filePath, await statusAnswer(false, '00', 'removeSockeIdFromArray', messageBody), 'warn');
+  const validatedData = await socketIdValidation(socketId);
 
-    return removingElement;
+  if (validatedData.catchError) {
+    const negativeAnswer = await statusAnswer(true, '11', 'authorize fail. Wrong request', JSON.stringify(validatedData.catchError));
+    loggerFunction('addSocketId', filePath, negativeAnswer, 'error');
+
+    return negativeAnswer;
   }
-  errorBody = await statusAnswer(true, '04', 'Такой элемент не найден', { elem: socketId });
-  loggerFunction('addSocketId', filePath, errorBody, 'warn');
 
-  return errorBody;
+  const foundIndex = notifyIdArray.findIndex((element) => element === socketId);
+
+  if (foundIndex !== -1) {
+    const removingElement = notifyIdArray.splice(foundIndex, 1);
+    const positiveAnswer = await statusAnswer(false, '00', 'OK', JSON.stringify(removingElement));
+    loggerFunction('removeSockeIdFromArray', filePath, positiveAnswer, 'info');
+
+    return positiveAnswer;
+  }
+
+  const negativeAnswer = await statusAnswer(true, '04', 'Такой элемент не найден', JSON.stringify({ elem: socketId }));
+  loggerFunction('removeSockeIdFromArray', filePath, negativeAnswer, 'warn');
+
+  return negativeAnswer;
 };
 
 export {

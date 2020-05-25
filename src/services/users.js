@@ -28,119 +28,133 @@ function onlyUnique(value, index, self) {
 // Начало: Блок функций авторизации и перехода по страницам
 // TODO: удалить { error: null } везде, где есть это выражение
 // authorize - авторизация, рефреш пользователя.
-const authorize = async ({ userId, socketId, page }) => {
-  const validatedData = await authorizeValidation({ userId, socketId, page });
+// const authorize = async ({ userId, socketId, page }) => {
+const authorize = async (userObject) => {
+  const validatedData = await authorizeValidation(userObject);
 
   if (validatedData.catchError) {
-    const logoutAnswer = await statusAnswer(true, '11', 'authorize fail. Wrong request', JSON.stringify(validatedData.catchError));
-    loggerFunction('logoutError', filePath, logoutAnswer, 'error');
+    const negativeAnswer = await statusAnswer(true, '11', 'authorize fail. Wrong request', JSON.stringify(validatedData.catchError));
+    loggerFunction('logoutError', filePath, negativeAnswer, 'error');
 
-    return logoutAnswer;
+    return negativeAnswer;
   }
 
   const socketIds = [];
   let uniqueSocketIds = [];
-  const pageAfterLowerCase = page.trim().toLowerCase();
-  // console.log('initial users: ', users);
-  // console.log('users.js authorize data: ', userId, socketId, page);
+
+  // const pageAfterLowerCase = page.trim().toLowerCase();
   const data1 = JSON.stringify({
-    users, userId, socketId, page: pageAfterLowerCase,
+    users,
+    userId: validatedData.userId,
+    socketId: validatedData.socketId,
+    page: validatedData.page,
   });
   loggerFunction('authorizeInfo', filePath, data1, 'info');
   // Исп-ся, если нет такого польз-ля в БД.
-  if (typeof userId === 'undefined') {
-    return { error: 'Ошибка входа' };
-  }
+  // Уже не нужно, т.к. валидатор следит за тем, чтобы
+  // userId было типа Integer
+  // if (typeof userId === 'undefined') {
+  //   const negativeAnswer = await statusAnswer(true, '01', 'Login failure');
+  //   loggerFunction('logoutEverywhere', filePath, negativeAnswer, 'error');
+
+  //   return negativeAnswer;
+  //   // return { error: 'Ошибка входа' };
+  // }
   // isUserExist - исп-ся при переходе пользователя по страницам, socket.id сохраняется
   const isUserExist = users.find((user) => {
-    // return user.userId === userId && user.page !== page && user.uniqueSocketIds[0] === socketId
     if (user.uniqueSocketIds !== null && user.uniqueSocketIds !== undefined) {
-      return user.userId === userId && user.uniqueSocketIds[0] === socketId;
+      return user.userId === validatedData.userId
+              && user.uniqueSocketIds[0] === validatedData.socketId;
     }
 
     return false;
   });
   // onDisconnect - исп-ся в случае рефреша страницы пользователем или
   // неожиданного отключения сокетов
-  const onDisconnect = users.find((user) => user.userId === userId
-                                            && user.uniqueSocketIds === undefined);
+  // const isDisconnect = () => {
+  //   if (typeof validatedData.socketId === 'undefined') {
+  //     return true;
+  //   }
+
+  //   return false;
+  // };
+
   // isTabDuplicate - исп-ся в случае открытия второй вкладки
   const isTabDuplicate = users.find((user) => {
     if (user.uniqueSocketIds !== null && user.uniqueSocketIds !== undefined) {
-      return user.userId === userId && user.uniqueSocketIds[0] !== socketId;
+      return user.userId === validatedData.userId
+              && user.uniqueSocketIds[0] !== validatedData.socketId;
     }
 
     return false;
   });
   // socketNull - исп-ся после нажатия кнопки "Выйти из других окон".
   // В этот момент массив uniqueSocketIds имеет значение null
-  const socketNull = users.find((user) => user.userId === userId && user.uniqueSocketIds === null);
+  const isSocketNull = users.find((user) => user.userId === validatedData.userId
+                                            && user.uniqueSocketIds === null);
 
   // Если польз-ль существует, просто дать ему работать. Выполняется
   // при переходе пользователя между страницами приложения без обновления
   // страницы
-  console.log('!!!', isUserExist);
   if (isUserExist) {
-    const foundIndex = users.findIndex((user) => user.userId === userId);
-    // console.log('isUserExist: ', users[foundIndex]);
-    users[foundIndex].page = pageAfterLowerCase;
-    // console.log('uniqueUsersArray: ', users);
-    const data2 = JSON.stringify({ isUserExist: users });
-    loggerFunction('isUserExistInfo', filePath, data2, 'info');
+    const foundIndex = users.findIndex((user) => user.userId === validatedData.userId);
+    users[foundIndex].page = validatedData.page;
     // TODO: удалить { error: null } и сделать return users[foundIndex].page = page
     const positiveAnswer = await statusAnswer(false, '00', 'User exist');
-    loggerFunction('authorize', filePath, positiveAnswer, 'info');
+    loggerFunction('authorizeIsUserExist', filePath, positiveAnswer, 'info');
 
     // return { error: null };
     return positiveAnswer;
   }
   // Исп-ся в случае рефреша страницы или иного случая
   // неожиданного закрытия сокетов
-  if (onDisconnect) {
-    // console.log('onDisconnect: ', socketId);
-    const foundIndex = users.findIndex((user) => user.userId === userId);
-    // return users[foundIndex].socketId = socketId
-    users[foundIndex].uniqueSocketIds = [];
-    users[foundIndex].uniqueSocketIds.push(socketId);
-    // Фильтрую массив, оставляя только уникальные элементы,
-    // поскольку при нажатии клавиши "Войти" пользов-ль сразу
-    // попадает на несколько страниц типа main и login с одинаковым
-    // socket.id
-    users[foundIndex].uniqueSocketIds = users[foundIndex].uniqueSocketIds.filter(onlyUnique);
-    const data3 = JSON.stringify({ onDisconnect: users[foundIndex] });
-    loggerFunction('isUserExistInfo', filePath, data3, 'info');
-    // console.log('onDisconnect user: ', users[foundIndex]);
-    return { error: null };
-  }
+  // if (isDisconnect) {
+  //   const foundIndex = users.findIndex((user) => user.userId === validatedData.userId);
+  //   users[foundIndex].uniqueSocketIds = [];
+  //   users[foundIndex].uniqueSocketIds.push(socketId);
+  // // Фильтрую массив, оставляя только уникальные элементы,
+  // // поскольку при нажатии клавиши "Войти" пользов-ль сразу
+  // // попадает на несколько страниц типа main и login с одинаковым
+  // // socket.id
+  // users[foundIndex].uniqueSocketIds = users[foundIndex].uniqueSocketIds.filter(onlyUnique);
+  // const data3 = JSON.stringify({ onDisconnect: users[foundIndex] });
+  // loggerFunction('authorizeIsDisconnect0', filePath, data3, 'info');
+  // // console.log('onDisconnect user: ', users[foundIndex]);
+  // const positiveAnswer = await statusAnswer(false, '00', 'User disconnected');
+  // loggerFunction('authorizeIsDisconnect1', filePath, positiveAnswer, 'info');
+
+  // return positiveAnswer;
+  //   // return { error: null };
+  // }
   // Исп-ся в случае дублирования вкладки браузера
   if (isTabDuplicate) {
-    const foundIndex = users.findIndex((user) => user.userId === userId);
-    users[foundIndex].uniqueSocketIds.push(socketId);
+    const foundIndex = users.findIndex((user) => user.userId === validatedData.userId);
+    users[foundIndex].uniqueSocketIds.push(validatedData.socketId);
     users[foundIndex].uniqueSocketIds = users[foundIndex].uniqueSocketIds.filter(onlyUnique);
-    const data4 = JSON.stringify({ duplicate: users });
-    loggerFunction('isTabDuplicateInfo', filePath, data4, 'info');
+
+    const negativeAnswer = await statusAnswer(true, '01', 'Duplicate tab');
+    loggerFunction('authorizeError', filePath, negativeAnswer, 'error');
     // console.log('duplicate user: ', users);
-    return { error: 'duplicate' };
+    return negativeAnswer;
+    // return { error: 'duplicate' };
   }
   // Если пользователь находится на любой странице после
   // нажатия клавиши "Выйти из других окон"
-  if (socketNull) {
+  if (isSocketNull) {
     // console.log('socketNull');
-    const foundIndex = users.findIndex((user) => user.userId === userId);
+    const foundIndex = users.findIndex((user) => user.userId === validatedData.userId);
     const data5 = JSON.stringify({ socketNull: foundIndex });
-    loggerFunction('socketNullInfo', filePath, data5, 'info');
-    users[foundIndex].uniqueSocketIds = [socketId];
+    loggerFunction('authorizeSocketNullInfo', filePath, data5, 'info');
+    users[foundIndex].uniqueSocketIds = [validatedData.socketId];
 
     return true;
   }
   // Исп-ся в случае, если польз-ль зашел в приложение в первый раз
 
-  socketIds.push(socketId);
+  socketIds.push(validatedData.socketId);
   uniqueSocketIds = socketIds.filter(onlyUnique);
-  const user = { userId, uniqueSocketIds, page };
+  const user = { userId: validatedData.userId, uniqueSocketIds, page: validatedData.page };
   users.push(user);
-  // console.info('uniqueSocketIds: ', uniqueSocketIds);
-  // console.log('uniqueUsersArray: ', users);
 
   const data6 = JSON.stringify({ uniqueSocketIds, uniqueUsersArray: users });
   loggerFunction('authorizeUserInfo', filePath, data6, 'info');
@@ -174,10 +188,10 @@ const logout = async (userId) => {
     return positiveAnswer;
   }
 
-  const logoutAnswer = await statusAnswer(true, '01', 'Logout fail');
-  loggerFunction('logoutError', filePath, logoutAnswer, 'error');
+  const negativeAnswer = await statusAnswer(true, '01', 'Logout fail');
+  loggerFunction('logoutError', filePath, negativeAnswer, 'error');
 
-  return logoutAnswer;
+  return negativeAnswer;
 };
 /**
  * logoutEverywhere() - отрабатывает при нажатии на кнопку "Выйти из других окон"
@@ -261,7 +275,6 @@ const disconnect = async (socketId) => {
 
     return false;
   });
-  console.log('disconnect found index', foundIndex);
 
 
   if (foundIndex !== -1) {

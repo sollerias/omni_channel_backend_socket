@@ -74,26 +74,47 @@ io.on('connection', (socket) => {
    */
   socket.on('authorize', async (options, callback) => {
     const data1 = JSON.stringify({ options, socketId: socket.id });
-    console.log('0 ', options, ' | ', socket.id);
-    const { error, user } = authorize({ socketId: socket.id, ...options });
-    console.log('1 ', user);
-    console.log('3 ', error);
+    const {
+      error,
+      status,
+      text,
+      user,
+    } = authorize({
+      userId: options.userId,
+      socketId: socket.id,
+      page: options.page,
+    });
+    // console.log('1 ', user);
+    // console.log('3 ', error);
     const data2 = JSON.stringify({ afterAuthorize: { user, error } });
-
-    callback(true);
-    if (error === 'duplicate') {
-      socket.emit('kick', { text: 'Вы уже работаете в другом окне' });
-      const logInfo = await statusAnswer(true, '01', 'Вы уже работаете в другом окне');
-      loggerFunction('authorizeError0', filePath, logInfo, 'warn');
-    }
-    const data = `${data1} | ${data2}`;
-    loggerFunction('authorizeError1', filePath, data, 'warn');
-
     if (error) {
+      if (text === 'Duplicate tab') {
+        socket.emit('kick', { text: 'Вы уже работаете в другом окне' });
+        const logInfo = await statusAnswer(true, '01', 'Вы уже работаете в другом окне');
+        loggerFunction('authorizeError0', filePath, logInfo, 'warn');
+        return;
+      }
+
       const data4 = JSON.stringify({ generalError: error });
       loggerFunction('authorizeError2', filePath, data4, 'warn');
-      return callback(error);
+      callback(error);
+
+      return;
     }
+    // callback(true);
+    // if (error === 'duplicate') {
+    //   socket.emit('kick', { text: 'Вы уже работаете в другом окне' });
+    //   const logInfo = await statusAnswer(true, '01', 'Вы уже работаете в другом окне');
+    //   loggerFunction('authorizeError0', filePath, logInfo, 'warn');
+    // }
+    // const data = `${data1} | ${data2}`;
+    // loggerFunction('authorizeError1', filePath, data, 'warn');
+
+    // if (error) {
+    //   const data4 = JSON.stringify({ generalError: error });
+    //   loggerFunction('authorizeError2', filePath, data4, 'warn');
+    //   return callback(error);
+    // }
     return user;
   });
 
@@ -113,7 +134,6 @@ io.on('connection', (socket) => {
     logout(data.userId); // Удаляет польз-ля из массива users
     // Начало: Для чата
     const user = removeUser(data.userId); // Удаляет польз-ля из массива chatUsers
-    console.log('disconnectUser user: ', user);
 
     const data2 = JSON.stringify({ removedUser: user });
     const data3 = `${data1} | ${data2}`;
@@ -137,11 +157,10 @@ io.on('connection', (socket) => {
   //  * на кнопку "Выйти из других окон"
   //  */
   socket.on('logoutEverywhere', (data, callback) => {
-    console.log('logoutEverywhere userId: ', data.userId);
-    console.log('logoutEverywhere socketId: ', socket.id);
+    // console.log('logoutEverywhere userId: ', data.userId);
+    // console.log('logoutEverywhere socketId: ', socket.id);
     const data1 = JSON.stringify({ logoutEverywhereData: data });
     const user = getLogoutUser(data.userId); // Берем объект с данными конкретного польз-ля
-    // if (user.uniqueSocketIds !== null && user.uniqueSocketIds !== undefined) {
     try {
       if (typeof user !== 'undefined' && user !== null && user.uniqueSocketIds !== null) {
         io.to(`${user.uniqueSocketIds[0]}`).emit('toLogin');
@@ -160,7 +179,6 @@ io.on('connection', (socket) => {
       loggerFunction('logoutEverywhere', filePath, logData, 'error');
     }
 
-    console.log('index.js logoutEverywhere user: ', user);
     const data2 = JSON.stringify({ logoutUser: user });
     const data3 = `${data1} | ${data2}`;
     loggerFunction('logoutEverywhere', filePath, data3, 'info');
@@ -201,7 +219,7 @@ io.on('connection', (socket) => {
   // join - отрабатывает при открытии пользователем вкладки Чат,
   // помещает пользователя в комнату default
   socket.on('join', (options, callback) => {
-    console.log('join options: ', options);
+    // console.log('join options: ', options);
     const { error, user } = addUser({ ...options });
     // console.log(error)
     if (error) {
@@ -221,9 +239,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('sendMessage', ({ message, userId }, callback) => {
-    console.log('sendMessage message: ', message, userId);
+    // console.log('sendMessage message: ', message, userId);
     const user = getUser(userId);
-    console.log('sendMessage user: ', user);
+    // console.log('sendMessage user: ', user);
     io.to(user.room).emit('message', generateMessage(user.username, message));
 
     return callback();
@@ -237,9 +255,7 @@ io.on('connection', (socket) => {
 
   // Начало: интерфейс для отправки уведомлений любого вида
   app.post('/notify', async (req, res) => {
-    // console.log('tabloItSocketId: ', tabloItSocketId)
     console.log('notify body data: ', req.body);
-    // console.log('notify body data: ', req.headers)
     // Валидация приходящих данных
     if (req.body) {
       // eslint-disable-next-line no-shadow
