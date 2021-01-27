@@ -1,6 +1,6 @@
 {
   "name": "omni_channel",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "backend_socket",
   "main": "dist/index.js",
   "bin": {
@@ -14,25 +14,35 @@
   ],
   "scripts": {
     "test": "jest",
-    "dev": "NODE_ENV=develop nodemon --exec babel src --out-dir dist --source-maps inline",
+    "dev": "DEBUG=server:debug NODE_ENV=development nodemon src/index.js --exec babel-node",
     "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
     "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sollerias/omni_channel_backend"
+    "url": "git+https://github.com/sollerias/omni_channel_backend_socket"
   },
   "author": "Gleb Tregubov",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/sollerias/omni_channel_backend/issues"
+    "url": "https://github.com/sollerias/omni_channel_backend_socket/issues"
   },
   "jest": {
     "testEnvironment": "node"
   },
-  "homepage": "https://github.com/sollerias/omni_channel_backend ",
+  "homepage": "https://github.com/sollerias/omni_channel_backend_socket ",
   "dependencies": {
-    "lodash": "^4.17.15"
+    "@hapi/joi": "^17.1.1",
+    "chalk": "^4.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "helmet": "^3.22.0",
+    "hpp": "^0.2.3",
+    "lodash": "^4.17.15",
+    "moment-timezone": "^0.5.28",
+    "simple-node-logger": "^18.12.24",
+    "socket.io": "^2.3.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
