@@ -39,7 +39,7 @@
     "express": "^4.17.1",
     "helmet": "^3.22.0",
     "hpp": "^0.2.3",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "moment-timezone": "^0.5.28",
     "simple-node-logger": "^18.12.24",
     "socket.io": "^2.3.0"
